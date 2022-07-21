@@ -1,0 +1,23 @@
+header {
+    text-align: center;
+    font-weight: bold;
+}
+
+nav {
+    border-top: dashed grey 1px;
+    border-bottom: dashed grey 1px;
+}
+
+nav ul {
+    display: flex;
+    list-style-type: none;
+    flex-flow: row wrap;
+}
+
+nav ul li {
+    padding-right: 20px;
+}
+
+nav ul li:last-child {
+    padding-right: 0;
+}
