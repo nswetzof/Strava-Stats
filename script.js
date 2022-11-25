@@ -5,7 +5,8 @@ const refresh_token = 'e3327102378d5d72c279112aa4262ac0807220f4';
 
 const submitBtn = document.querySelector(".submit");
 
-submitBtn.addEventListener("click", redirect)
+window.addEventListener("load", authorize);
+submitBtn.addEventListener("click", getCredentials)
 
 
 // var StravaApiV3 = require('strava_api_v3');
@@ -26,14 +27,39 @@ submitBtn.addEventListener("click", redirect)
 // };
 // api.getLoggedInAthlete(callback);
 
-function redirect(e) {
-  // TODO: implement
+function getCredentials(e) {
   e.preventDefault();
 
   console.log("redirecting...");
-  // window.location.href = `https://www.strava.com/oauth/authorize \
-  //                         -d client_id=${client_id} \
-  //                         -d client_secret=${client_secret} \
-  //                         -d code=${};
   window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_propt=force&scope=read_all&redirect_uri=http://localhost:8000`;
+}
+
+function authorize(e) {
+  let addr = new URL(window.location.href);
+
+  if(addr.searchParams.has("code")) {
+
+    let code = addr.searchParams.get("code");
+
+    const message = fetch("https://www.strava.com/api/v3/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      // credentials: "omit",
+      body: JSON.stringify( {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code"
+      } )
+    }).then((response) => response.json());
+    console.log(message);
+
+
+    // window.location.href = `https://www.strava.com/oauth/authorize \
+    //                         -d client_id=${client_id} \
+    //                         -d client_secret=${client_secret} \
+    //                         -d code=${};
+  }
 }
