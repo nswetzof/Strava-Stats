@@ -3,10 +3,20 @@ const client_secret = '647c3ad896a07628c0337e0b92a5fd3b20adbfb7';
 // const access_token = '4b454f427b408868d378c86214e159ef496071d0';
 // const refresh_token = 'e3327102378d5d72c279112aa4262ac0807220f4';
 
-const submitBtn = document.querySelector(".submit");
+// let access_token = null;
+// let refresh_token = null;
+
+const submitBtn = document.querySelector(".main_button");
+const searchTerm = document.querySelector(".search");
+const searchForm = document.querySelector("form");
+const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't go in this file
 
 // window.addEventListener("load", authorize);
-submitBtn.addEventListener("click", e => getCredentials(e))
+submitBtn.addEventListener("click", e => redirect(e));
+searchForm.addEventListener("submit", e => {
+  getAthleteStats()
+})
+// redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
 
 const main = document.querySelector("main");
 
@@ -19,7 +29,6 @@ run();
 async function run() {
 
   const message = await authorize();
-  // message.then((result) => console.log(result));
   console.log(message);
 
   let access_token = message.access_token;
@@ -27,29 +36,15 @@ async function run() {
   const athlete = message.athlete;
 
   console.log([access_token, refresh_token]);
+
+  getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
 }
 
-// var StravaApiV3 = require('strava_api_v3');
-// var defaultClient = StravaApiV3.ApiClient.instance;
+/* Authorization functions (getTokens is unused) */
 
-// // Configure OAuth2 access token for authorization: strava_oauth
-// var strava_oauth = defaultClient.authentications['strava_oauth'];
-// strava_oauth.accessToken = access_token;
-
-// var api = new StravaApiV3.AthletesApi()
-
-// var callback = function(error, data, response) {
-//   if (error) {
-//     console.error(error);
-//   } else {
-//     console.log('API called successfully. Returned data: ' + data);
-//   }
-// };
-// api.getLoggedInAthlete(callback);
-
-function getCredentials(e) {
+function redirect(e, callback=window.location.origin) {
   e.preventDefault();
-  window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_propt=force&scope=read_all&redirect_uri=http://localhost:8000`;
+  window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_propt=force&scope=read_all&redirect_uri=${callback}`;
 }
 
 async function authorize() {
@@ -72,14 +67,14 @@ async function authorize() {
         "grant_type": "authorization_code"
       } )
     }).then((response) => {
-        if(!response.ok)
-          throw new Error(`HTTP error: ${response.status}`);
-        
-        return response.json();
+      if(!response.ok)
+      throw new Error(`HTTP error: ${response.status}`);
+      
+      return response.json();
     }).then((data) => {
-        return data
+      return data
     }).catch((error) => {
-        console.error(`Authentication error: ${error}`);
+      console.error(`Authentication error: ${error}`);
     });
 
     return messagePromise;
@@ -92,9 +87,60 @@ async function getTokens(response) {
   });
   console.log("here is the result:");
   console.log(result);
-
+  
   let access = result.access_token;
   let refresh = result.refresh_token;
-
+  
   return [access, refresh];
 }
+
+/* API Calls */
+async function getLoggedInAthlete(access_token, athlete) {
+  let url = `https://www.strava.com/api/v3/athlete`;
+
+  const response = await fetch(url, {
+    headers: {
+      "authorization": `Bearer ${access_token}`
+    }
+  }).then((response) => {
+    if(!response.ok)
+      throw new Error(`HTTP Error: ${response.status}`)
+
+      return response.json();
+  }).catch(error => {
+    console.error(`Error: ${error}`);
+  });
+
+  return response;
+}
+
+async function getAthleteStats(access_token, athlete_id) {
+  let url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`
+
+  const response = await fetch(url).then(response => {
+    if(!response.ok)
+      throw new Error(`HTTP Error: ${response.status}`);
+    
+    return response.json();
+  }).catch(error => {
+    console.error(`Error: ${error}`);
+  });
+}
+
+// var StravaApiV3 = require('strava_api_v3');
+// var defaultClient = StravaApiV3.ApiClient.instance;
+
+// // Configure OAuth2 access token for authorization: strava_oauth
+// var strava_oauth = defaultClient.authentications['strava_oauth'];
+// strava_oauth.accessToken = access_token;
+
+// var api = new StravaApiV3.AthletesApi()
+
+// var callback = function(error, data, response) {
+//   if (error) {
+//     console.error(error);
+//   } else {
+//     console.log('API called successfully. Returned data: ' + data);
+//   }
+// };
+// api.getLoggedInAthlete(callback);

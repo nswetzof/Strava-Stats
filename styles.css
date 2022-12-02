@@ -21,3 +21,18 @@ nav ul li {
 nav ul li:last-child {
     padding-right: 0;
 }
+
+.redirect {
+    color:blue;
+    text-decoration: underline;
+}
+
+.athlete form {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.athlete form p * {
+    margin-right: 5px;
+
+}
