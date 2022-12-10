@@ -3,8 +3,9 @@ const client_secret = '647c3ad896a07628c0337e0b92a5fd3b20adbfb7';
 // const access_token = '4b454f427b408868d378c86214e159ef496071d0';
 // const refresh_token = 'e3327102378d5d72c279112aa4262ac0807220f4';
 
-// let access_token = null;
-// let refresh_token = null;
+let access_token = null;
+let refresh_token = null;
+let athlete = null;
 
 const submitBtn = document.querySelector(".main_button");
 const searchTerm = document.querySelector(".search");
@@ -14,7 +15,7 @@ const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't
 // window.addEventListener("load", authorize);
 submitBtn.addEventListener("click", e => redirect(e));
 searchForm.addEventListener("submit", e => {
-  getAthleteStats()
+  getAthleteStats(access_token, searchTerm.value);
 })
 // redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
 
@@ -28,12 +29,19 @@ run();
 
 async function run() {
 
-  const message = await authorize();
-  console.log(message);
+  await authorize().then((response) => {
 
-  let access_token = message.access_token;
-  let refresh_token = message.refresh_token;
-  const athlete = message.athlete;
+    access_token = response.access_token;
+    refresh_token = response.refresh_token;
+    athlete = response.athlete_id;
+  }).catch(error => {
+    console.error(`Error: ${error}`);
+  });
+  // console.log(message);
+
+  // let access_token = message.access_token;
+  // let refresh_token = message.refresh_token;
+  // const athlete = message.athlete;
 
   console.log([access_token, refresh_token]);
 
@@ -68,11 +76,11 @@ async function authorize() {
       } )
     }).then((response) => {
       if(!response.ok)
-      throw new Error(`HTTP error: ${response.status}`);
+        throw new Error(`HTTP error: ${response.status}`);
       
       return response.json();
     }).then((data) => {
-      return data
+      return data;
     }).catch((error) => {
       console.error(`Authentication error: ${error}`);
     });
@@ -117,11 +125,13 @@ async function getLoggedInAthlete(access_token, athlete) {
 async function getAthleteStats(access_token, athlete_id) {
   let url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`
 
-  const response = await fetch(url).then(response => {
+  fetch(url).then(response => {
     if(!response.ok)
       throw new Error(`HTTP Error: ${response.status}`);
     
     return response.json();
+  }).then(data => {
+    console.log(data);
   }).catch(error => {
     console.error(`Error: ${error}`);
   });
