@@ -9,12 +9,14 @@ let athlete = null;
 
 const submitBtn = document.querySelector(".main_button");
 const searchTerm = document.querySelector(".search");
-const searchForm = document.querySelector("form");
+const searchForm = document.querySelector(".search_form");
 const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't go in this file
 
 // window.addEventListener("load", authorize);
 submitBtn.addEventListener("click", e => redirect(e));
 searchForm.addEventListener("submit", e => {
+  console.log(access_token);
+  e.preventDefault();
   getAthleteStats(access_token, searchTerm.value);
 })
 // redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
@@ -25,7 +27,11 @@ const para = document.createElement("p");
 para.textContent = "Test";
 main.appendChild(para);
 
+console.log(searchForm);
+
 run();
+
+console.log("finished");
 
 async function run() {
 
@@ -37,13 +43,6 @@ async function run() {
   }).catch(error => {
     console.error(`Error: ${error}`);
   });
-  // console.log(message);
-
-  // let access_token = message.access_token;
-  // let refresh_token = message.refresh_token;
-  // const athlete = message.athlete;
-
-  console.log([access_token, refresh_token]);
 
   getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
 }
@@ -125,7 +124,11 @@ async function getLoggedInAthlete(access_token, athlete) {
 async function getAthleteStats(access_token, athlete_id) {
   let url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`
 
-  fetch(url).then(response => {
+  fetch(url, {
+    headers: {
+      "authorization": `Bearer ${access_token}`
+    }
+  }).then(response => {
     if(!response.ok)
       throw new Error(`HTTP Error: ${response.status}`);
     
