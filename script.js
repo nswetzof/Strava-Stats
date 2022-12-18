@@ -122,22 +122,37 @@ async function getLoggedInAthlete(access_token, athlete) {
 }
 
 async function getAthleteStats(access_token, athlete_id) {
-  let url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`
+  const url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`;
 
-  fetch(url, {
+  let test = await readData(access_token, url).then(data => {
+    console.log(`data is: ${data}`);
+    return data;
+  }).then(result => {
+    return result;
+  }).catch(error => {
+    console.error(`Error: ${error}`);
+  });
+
+  console.log(test);
+}
+
+async function readData(access_token, url, read_all = true) {
+  const result = await fetch(url, {
     headers: {
-      "authorization": `Bearer ${access_token}`
+      "Content-Type": "application/json",
+      "authorization":  `Bearer ${access_token}`
     }
   }).then(response => {
     if(!response.ok)
       throw new Error(`HTTP Error: ${response.status}`);
-    
+
+    console.log(response);
     return response.json();
-  }).then(data => {
-    console.log(data);
   }).catch(error => {
-    console.error(`Error: ${error}`);
+    console.error(`Error accessing data: ${error}`);
   });
+
+  return result;
 }
 
 // var StravaApiV3 = require('strava_api_v3');
