@@ -1,5 +1,5 @@
 const client_id = '53575'
-const client_secret = '647c3ad896a07628c0337e0b92a5fd3b20adbfb7';
+const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
 // const access_token = '4b454f427b408868d378c86214e159ef496071d0';
 // const refresh_token = 'e3327102378d5d72c279112aa4262ac0807220f4';
 
@@ -15,7 +15,6 @@ const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't
 // window.addEventListener("load", authorize);
 submitBtn.addEventListener("click", e => redirect(e));
 searchForm.addEventListener("submit", e => {
-  console.log(access_token);
   e.preventDefault();
   getAthleteStats(access_token, searchTerm.value);
 })
@@ -26,8 +25,6 @@ const main = document.querySelector("main");
 const para = document.createElement("p");
 para.textContent = "Test";
 main.appendChild(para);
-
-console.log(searchForm);
 
 run();
 
@@ -44,14 +41,18 @@ async function run() {
     console.error(`Error: ${error}`);
   });
 
-  getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
+  // getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
+
+  getLoggedInAthleteActivities(access_token); // TODO: WHY IS DATA EMPTY?
+
 }
 
 /* Authorization functions (getTokens is unused) */
 
 function redirect(e, callback=window.location.origin) {
   e.preventDefault();
-  window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_propt=force&scope=read_all&redirect_uri=${callback}`;
+  window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_prompt=force\
+  &scope=read_all,activity:read_all&redirect_uri=${callback}`;
 }
 
 async function authorize() {
@@ -92,8 +93,6 @@ async function getTokens(response) {
   let result = await response.then((data) => {
     return data;
   });
-  console.log("here is the result:");
-  console.log(result);
   
   let access = result.access_token;
   let refresh = result.refresh_token;
@@ -105,18 +104,26 @@ async function getTokens(response) {
 async function getLoggedInAthlete(access_token, athlete) {
   let url = `https://www.strava.com/api/v3/athlete`;
 
-  const response = await fetch(url, {
-    headers: {
-      "authorization": `Bearer ${access_token}`
-    }
-  }).then((response) => {
-    if(!response.ok)
-      throw new Error(`HTTP Error: ${response.status}`)
+  // const response = await fetch(url, {
+  //   headers: {
+  //     "authorization": `Bearer ${access_token}`
+  //   }
+  // }).then((response) => {
+  //   if(!response.ok)
+  //     throw new Error(`HTTP Error: ${response.status}`)
 
-      return response.json();
+  //     return response.json();
+  // }).catch(error => {
+  //   console.error(`Error: ${error}`);
+  // });
+
+  const response = await readData(access_token, url).then(data => {
+    return data;
+  }).then(result => {
+    return result;
   }).catch(error => {
     console.error(`Error: ${error}`);
-  });
+  })
 
   return response;
 }
@@ -124,29 +131,54 @@ async function getLoggedInAthlete(access_token, athlete) {
 async function getAthleteStats(access_token, athlete_id) {
   const url = `https://www.strava.com/api/v3/athletes/${athlete_id}/stats`;
 
-  let test = await readData(access_token, url).then(data => {
-    console.log(`data is: ${data}`);
+  let result = await readData(access_token, url).then(data => {
     return data;
-  }).then(result => {
-    return result;
   }).catch(error => {
     console.error(`Error: ${error}`);
   });
 
-  console.log(test);
+  console.log(result);
 }
 
+// async function getAllAthleteActivities(access_token, before = Date.now()/1000, after = 0) {
+//   let page = 1;
+  
+//   do {
+//     let activities = getLoggedInAthleteActivities(access_token, before, after, page, 100);
+
+//   }
+// }
+
+async function getLoggedInAthleteActivities(access_token, before = Date.now()/1000, after = 0, page = 1, per_page = 30) {
+  const url = `https://www.strava.com/api/v3/athlete/activities?before=${before}&after=${after}&page=${page}&per_page=${per_page}`;
+  
+  const result = await readData(access_token, url).then(data => {
+    console.log("data is: ");
+    console.log(data);
+    return data;
+  }).catch(error => {
+    console.error(`Error: ${error}`);
+  })
+}
+
+/*
+Uses fetch to obtain data in JSON format from the strava api
+Inputs: 
+  access_token - The unique access token given to a user in order to access the api
+  url - URL to be accessed
+Requires: access_token is a valid access token.  If not, will receive an error.
+*/
 async function readData(access_token, url, read_all = true) {
   const result = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      "authorization":  `Bearer ${access_token}`
+      "Authorization":  `Bearer ${access_token}`
     }
   }).then(response => {
     if(!response.ok)
       throw new Error(`HTTP Error: ${response.status}`);
 
-    console.log(response);
+    console.log(response);  // TODO: DELETE AFTER DEBUGGING
     return response.json();
   }).catch(error => {
     console.error(`Error accessing data: ${error}`);

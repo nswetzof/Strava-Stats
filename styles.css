@@ -36,3 +36,8 @@ nav ul li:last-child {
     margin-right: 5px;
 
 }
+
+footer {
+    padding-top: 10em;
+    font-size: 75%;
+}
