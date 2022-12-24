@@ -43,8 +43,10 @@ async function run() {
 
   // getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
 
-  getLoggedInAthleteActivities(access_token); // TODO: WHY IS DATA EMPTY?
+  let test = await getLoggedInAthleteActivities(access_token); 
+  // let test = await getAllAthleteActivities(access_token);
 
+  console.log(test);
 }
 
 /* Authorization functions (getTokens is unused) */
@@ -104,19 +106,6 @@ async function getTokens(response) {
 async function getLoggedInAthlete(access_token, athlete) {
   let url = `https://www.strava.com/api/v3/athlete`;
 
-  // const response = await fetch(url, {
-  //   headers: {
-  //     "authorization": `Bearer ${access_token}`
-  //   }
-  // }).then((response) => {
-  //   if(!response.ok)
-  //     throw new Error(`HTTP Error: ${response.status}`)
-
-  //     return response.json();
-  // }).catch(error => {
-  //   console.error(`Error: ${error}`);
-  // });
-
   const response = await readData(access_token, url).then(data => {
     return data;
   }).then(result => {
@@ -140,16 +129,45 @@ async function getAthleteStats(access_token, athlete_id) {
   console.log(result);
 }
 
-// async function getAllAthleteActivities(access_token, before = Date.now()/1000, after = 0) {
-//   let page = 1;
+async function getAllAthleteActivities(access_token, before = (Date.now()/1000).toFixed(0), after = 0, page = 1, max_pages = 1000) {
+  // let page = 1;
+  let results = [];
+
+  let activities = await getLoggedInAthleteActivities(access_token, before, after, page, 1000);
   
-//   do {
-//     let activities = getLoggedInAthleteActivities(access_token, before, after, page, 100);
+  // if(activities.length === 0) {
+  //   return [];
+  // }
+  
+  // results = results.concat(activities);
 
-//   }
-// }
+  // activities = await getAllAthleteActivities(access_token, before, after, page + 1, max_pages);
+  // console.log(activities);
 
-async function getLoggedInAthleteActivities(access_token, before = Date.now()/1000, after = 0, page = 1, per_page = 30) {
+  // results = results.concat(activities);
+
+  // return results;
+
+  // let activities = await getLoggedInAthleteActivities(access_token, before, after, page, 100).then(result => {
+  //   if(result.length === 0) {
+  //     return result;
+  //   }
+
+    
+  // });
+  
+  while(activities.length > 0 && page < max_pages) {
+    results = results.concat(activities);
+    
+    activities = await getLoggedInAthleteActivities(access_token, before, after, page, 100);
+
+    page += 1;
+  }
+
+  return results;
+}
+
+async function getLoggedInAthleteActivities(access_token, before = (Date.now()/1000).toFixed(0), after = 0, page = 1, per_page = 30) {
   const url = `https://www.strava.com/api/v3/athlete/activities?before=${before}&after=${after}&page=${page}&per_page=${per_page}`;
   
   const result = await readData(access_token, url).then(data => {
@@ -159,6 +177,8 @@ async function getLoggedInAthleteActivities(access_token, before = Date.now()/10
   }).catch(error => {
     console.error(`Error: ${error}`);
   })
+
+  return result;
 }
 
 /*
