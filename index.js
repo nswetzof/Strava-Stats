@@ -1,3 +1,13 @@
+// var requirejs = require("requirejs");
+
+// requirejs.config({
+//   // Pass the top-level script.js require function to requirejs so that
+//   // node modules are loaded relative to the top-level JS file.
+//   nodeRequire: require
+// });
+
+// require("swagger");
+
 const client_id = '53575'
 const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
 // const access_token = '4b454f427b408868d378c86214e159ef496071d0';
@@ -43,10 +53,7 @@ async function run() {
 
   // getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
 
-  let test = await getLoggedInAthleteActivities(access_token); 
-  // let test = await getAllAthleteActivities(access_token);
-
-  console.log(test);
+  // let test = await getLoggedInAthleteActivities(access_token); 
 }
 
 /* Authorization functions (getTokens is unused) */
@@ -198,7 +205,6 @@ async function readData(access_token, url, read_all = true) {
     if(!response.ok)
       throw new Error(`HTTP Error: ${response.status}`);
 
-    console.log(response);  // TODO: DELETE AFTER DEBUGGING
     return response.json();
   }).catch(error => {
     console.error(`Error accessing data: ${error}`);
@@ -206,6 +212,50 @@ async function readData(access_token, url, read_all = true) {
 
   return result;
 }
+
+const DB_NAME = "AccessTokens";
+const DB_VERSION = 1;
+
+function openDB() {
+  const request = window.indexedDB.open("AthleteInformation", 1);
+
+  request.onblocked = (event) => {
+    alert("Please close all other tabs with this site open.");
+  }
+
+  request.onerror = (event) => {
+    console.error(`Error: ${event.target.errorCode}`);
+  };
+
+  request.onsuccess = (event) => {
+    db = event.target.result;
+
+    // TODO: Make sure this is where error handling should occur.  Errors bubble from the database object.
+    db.onerror = (event) => {
+      console.error(`Database error: ${event.target.errorCode}`);
+    }
+  };
+
+  request.onupgradeneeded = (event) => {
+    // Save the IDBDatabase interface
+    db = event.target.result;
+  
+    // Create an access token object store
+    const accessStore = db.createObjectStore("access", {keyPath: "id"});
+    accessStore.createIndex("access_token", "access_token", {unique: false});
+    accessStore.createIndex("expiration", "expiration", {unique: false});
+
+    // Create a refresh token object store
+    const refreshStore = db.createObjectStore("refresh", {keyPath: "id"});
+    refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
+  };
+  
+  function useDatabase(db) {
+    db.onversionchange = (event) => {
+      db.close();
+      alert("A new version of this page is ready.  Please reload or close this tab.");
+    };
+  }
 
 // var StravaApiV3 = require('strava_api_v3');
 // var defaultClient = StravaApiV3.ApiClient.instance;
