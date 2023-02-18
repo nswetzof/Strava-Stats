@@ -10,8 +10,6 @@
 
 const client_id = '53575'
 const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
-// const access_token = '4b454f427b408868d378c86214e159ef496071d0';
-// const refresh_token = 'e3327102378d5d72c279112aa4262ac0807220f4';
 
 let access_token = null;
 let refresh_token = null;
@@ -50,6 +48,11 @@ async function run() {
   }).catch(error => {
     console.error(`Error: ${error}`);
   });
+
+  const db = await openDB();
+  addCredentials(db, athlete, "read_all", access_token, refresh_token);
+
+  //checkAuthentication();
 
   // getLoggedInAthlete(access_token, athlete).then(response => console.log(response));
 
@@ -137,31 +140,9 @@ async function getAthleteStats(access_token, athlete_id) {
 }
 
 async function getAllAthleteActivities(access_token, before = (Date.now()/1000).toFixed(0), after = 0, page = 1, max_pages = 1000) {
-  // let page = 1;
   let results = [];
 
   let activities = await getLoggedInAthleteActivities(access_token, before, after, page, 1000);
-  
-  // if(activities.length === 0) {
-  //   return [];
-  // }
-  
-  // results = results.concat(activities);
-
-  // activities = await getAllAthleteActivities(access_token, before, after, page + 1, max_pages);
-  // console.log(activities);
-
-  // results = results.concat(activities);
-
-  // return results;
-
-  // let activities = await getLoggedInAthleteActivities(access_token, before, after, page, 100).then(result => {
-  //   if(result.length === 0) {
-  //     return result;
-  //   }
-
-    
-  // });
   
   while(activities.length > 0 && page < max_pages) {
     results = results.concat(activities);
@@ -216,7 +197,7 @@ async function readData(access_token, url, read_all = true) {
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
 
-function openDB() {
+async function openDB() {
   const request = window.indexedDB.open("AthleteInformation", 1);
 
   request.onblocked = (event) => {
@@ -234,6 +215,8 @@ function openDB() {
     db.onerror = (event) => {
       console.error(`Database error: ${event.target.errorCode}`);
     }
+
+    return db;
   };
 
   request.onupgradeneeded = (event) => {
@@ -248,14 +231,55 @@ function openDB() {
     // Create a refresh token object store
     const refreshStore = db.createObjectStore("refresh", {keyPath: "id"});
     refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
+
+    console.log( `Success! Created the following object stores:`);
+    db.objectStoreNames.forEach(objStore => console.log(objStore));
+
+    return db;
   };
+}
   
-  function useDatabase(db) {
-    db.onversionchange = (event) => {
-      db.close();
-      alert("A new version of this page is ready.  Please reload or close this tab.");
-    };
+function useDatabase() {
+  db.onversionchange = (event) => {
+    db.close();
+    alert("A new version of this page is ready.  Please reload or close this tab.");
+  };
+}
+
+function addCredentials(db, id, scope, access_token, expiration, refresh_token) {
+  console.log(db);
+  const transaction = db.transaction(["access", "refresh"], "readwrite");
+  const accessStore = transaction.objectStore("access");
+  const refreshStore = transaction.objectStore("refresh");
+  // const access_request = accessStore.get("id");
+
+  // access_request.oncomplete = (event) => {
+  //   console.log("Transaction completed");  // TODO: update message
+  // }
+  // access_request.onerror = (event) => {
+  //   console.error(`Error in transaction: ${event.target.result.errorCode}`);
+  // }
+}
+
+function checkAuthentication(id) {
+  const transaction = db.transaction(["access", "refresh"], "readwrite");
+
+  transaction.oncomplete = (event) => {
+    console.log("Transaction completed");  // TODO: update message
   }
+  transaction.onerror = (event) => {
+    console.error(`Error in transaction: ${event.target.result.errorCode}`);
+  }
+
+  const accessStore = transaction.objectStore("access");
+
+  const request = accessStore.get(id);
+
+  request.onsuccess = (event) => {
+    let access =  event.target.result;
+    console.log(access);
+  }
+}
 
 // var StravaApiV3 = require('strava_api_v3');
 // var defaultClient = StravaApiV3.ApiClient.instance;
