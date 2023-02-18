@@ -15,6 +15,10 @@ let access_token = null;
 let refresh_token = null;
 let athlete = null;
 
+let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
+openDB();
+
+
 const submitBtn = document.querySelector(".main_button");
 const searchTerm = document.querySelector(".search");
 const searchForm = document.querySelector(".search_form");
@@ -24,7 +28,6 @@ const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't
 submitBtn.addEventListener("click", e => redirect(e));
 searchForm.addEventListener("submit", e => {
   e.preventDefault();
-  getAthleteStats(access_token, searchTerm.value);
 })
 // redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
 
@@ -34,8 +37,6 @@ const para = document.createElement("p");
 para.textContent = "Test";
 main.appendChild(para);
 
-run();
-
 console.log("finished");
 
 async function run() {
@@ -44,13 +45,14 @@ async function run() {
 
     access_token = response.access_token;
     refresh_token = response.refresh_token;
-    athlete = response.athlete_id;
+    athlete = response.athlete.id;
+
+    addCredentials(db, athlete, "read_all", access_token, 0, refresh_token);
   }).catch(error => {
-    console.error(`Error: ${error}`);
+    console.error(`Authorization Error: ${error}`);
   });
 
-  const db = await openDB();
-  addCredentials(db, athlete, "read_all", access_token, refresh_token);
+  // addCredentials(db, athlete, "read_all", access_token, refresh_token);
 
   //checkAuthentication();
 
@@ -197,32 +199,33 @@ async function readData(access_token, url, read_all = true) {
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
 
-async function openDB() {
+function openDB() {
   const request = window.indexedDB.open("AthleteInformation", 1);
 
   request.onblocked = (event) => {
     alert("Please close all other tabs with this site open.");
-  }
+  };
 
   request.onerror = (event) => {
     console.error(`Error: ${event.target.errorCode}`);
   };
 
   request.onsuccess = (event) => {
+    console.log("Success event triggered");
+
     db = event.target.result;
 
-    // TODO: Make sure this is where error handling should occur.  Errors bubble from the database object.
+    run();
+  };
+  
+  request.onupgradeneeded = (event) => {
+    // Save the IDBDatabase interface
+    db = event.target.result;
+    
     db.onerror = (event) => {
       console.error(`Database error: ${event.target.errorCode}`);
     }
 
-    return db;
-  };
-
-  request.onupgradeneeded = (event) => {
-    // Save the IDBDatabase interface
-    db = event.target.result;
-  
     // Create an access token object store
     const accessStore = db.createObjectStore("access", {keyPath: "id"});
     accessStore.createIndex("access_token", "access_token", {unique: false});
@@ -233,9 +236,9 @@ async function openDB() {
     refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
 
     console.log( `Success! Created the following object stores:`);
-    db.objectStoreNames.forEach(objStore => console.log(objStore));
-
-    return db;
+    for(let i = 0; i < db.objectStoreNames.length; i++) {
+      console.log(db.objectStoreNames[i]);
+    }
   };
 }
   
@@ -247,18 +250,17 @@ function useDatabase() {
 }
 
 function addCredentials(db, id, scope, access_token, expiration, refresh_token) {
-  console.log(db);
   const transaction = db.transaction(["access", "refresh"], "readwrite");
   const accessStore = transaction.objectStore("access");
   const refreshStore = transaction.objectStore("refresh");
-  // const access_request = accessStore.get("id");
+  const access_request = accessStore.put({"id": id, "access_token" : access_token, "expiration" : expiration});
 
-  // access_request.oncomplete = (event) => {
-  //   console.log("Transaction completed");  // TODO: update message
-  // }
-  // access_request.onerror = (event) => {
-  //   console.error(`Error in transaction: ${event.target.result.errorCode}`);
-  // }
+  access_request.oncomplete = (event) => {
+    console.log("Transaction completed");  // TODO: update message
+  }
+  access_request.onerror = (event) => {
+    console.error(`Error in transaction: ${event.target.result.errorCode}`);
+  }
 }
 
 function checkAuthentication(id) {
