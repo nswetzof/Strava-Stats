@@ -14,6 +14,7 @@ const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
 let access_token = null;
 let refresh_token = null;
 let athlete = null;
+let scope = "read";
 
 let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
 openDB();
@@ -42,12 +43,17 @@ console.log("finished");
 async function run() {
 
   await authorize().then((response) => {
-
     access_token = response.access_token;
     refresh_token = response.refresh_token;
     athlete = response.athlete.id;
 
-    addCredentials(db, athlete, "read_all", access_token, 0, refresh_token);
+    const expiration = response.athlete.expires_at;
+    const name = `${response.athlete.firstname} ${response.athlete.lastname}`;
+    
+    localStorage.setItem("user", athlete);
+    
+    addCredentials(db, athlete, scope, access_token, expiration, refresh_token);
+    
   }).catch(error => {
     console.error(`Authorization Error: ${error}`);
   });
@@ -75,6 +81,7 @@ async function authorize() {
   if(addr.searchParams.has("code")) {
 
     let code = addr.searchParams.get("code");
+    scope = addr.searchParams.get("scope");
 
     const messagePromise = await fetch("https://www.strava.com/api/v3/oauth/token", {
       method: "POST",
@@ -196,6 +203,8 @@ async function readData(access_token, url, read_all = true) {
   return result;
 }
 
+// Database functions
+
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
 
@@ -211,11 +220,11 @@ function openDB() {
   };
 
   request.onsuccess = (event) => {
-    console.log("Success event triggered");
+    console.log("Successfully opened the database.");
 
     db = event.target.result;
 
-    run();
+    run(); // run main loop of the program
   };
   
   request.onupgradeneeded = (event) => {
@@ -249,18 +258,41 @@ function useDatabase() {
   };
 }
 
+/***********************************************************************************
+* Add access and refresh token information for the logged in user to the database.
+  Parameters:
+    db: database to be modified
+    id: athlete_id for the logged in user.  This is the keyPath so must be unique
+    scope: scope granted (eg. read, read_all, etc.)
+    access_token: the retrieved access token
+    expiration: the time value when the access token expires
+    refresh_token: the retrieved refresh token
+
+***********************************************************************************/
 function addCredentials(db, id, scope, access_token, expiration, refresh_token) {
   const transaction = db.transaction(["access", "refresh"], "readwrite");
   const accessStore = transaction.objectStore("access");
   const refreshStore = transaction.objectStore("refresh");
-  const access_request = accessStore.put({"id": id, "access_token" : access_token, "expiration" : expiration});
-
-  access_request.oncomplete = (event) => {
-    console.log("Transaction completed");  // TODO: update message
+  
+  // add access token information to database
+  const access_request = accessStore.put({"id" : id, "scope" : scope, "access_token" : access_token, "expiration" : expiration});
+  
+  access_request.onsuccess = (event) => {
+    console.log("Access credentials added.");
   }
   access_request.onerror = (event) => {
     console.error(`Error in transaction: ${event.target.result.errorCode}`);
   }
+  
+  // add refresh token information to the database
+  const refresh_request = refreshStore.put({"id" : id, "refresh_token" : refresh_token, "scope" : scope});
+  
+  refresh_request.onsuccess = (event) => {
+    console.log("Refresh credentials added.");
+  };
+  refresh_request.onerror = (event) => {
+    console.error(`Error adding refresh credentials: ${event.target.result.errorCode}`);
+  };
 }
 
 function checkAuthentication(id) {
