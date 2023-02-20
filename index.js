@@ -26,7 +26,7 @@ const searchForm = document.querySelector(".search_form");
 const redirectBtn = document.querySelector(".redirect");  // TODO: maybe doesn't go in this file
 
 // window.addEventListener("load", authorize);
-submitBtn.addEventListener("click", e => redirect(e));
+submitBtn.addEventListener("click", e => redirect(e, "read_all,activity:read_all"));
 searchForm.addEventListener("submit", e => {
   e.preventDefault();
 })
@@ -42,23 +42,25 @@ console.log("finished");
 
 async function run() {
 
+  // if(localStorage.getItem("user")) {
+
+  // }
   await authorize().then((response) => {
+    console.log(response);
     access_token = response.access_token;
     refresh_token = response.refresh_token;
     athlete = response.athlete.id;
 
-    const expiration = response.athlete.expires_at;
+    const expiration = response.expires_at;
     const name = `${response.athlete.firstname} ${response.athlete.lastname}`;
     
     localStorage.setItem("user", athlete);
     
     addCredentials(db, athlete, scope, access_token, expiration, refresh_token);
-    
+    checkAuthentication(athlete, "activity:write");
   }).catch(error => {
     console.error(`Authorization Error: ${error}`);
   });
-
-  // addCredentials(db, athlete, "read_all", access_token, refresh_token);
 
   //checkAuthentication();
 
@@ -69,10 +71,10 @@ async function run() {
 
 /* Authorization functions (getTokens is unused) */
 
-function redirect(e, callback=window.location.origin) {
+function redirect(e, scope, callback=window.location.origin) {
   e.preventDefault();
   window.location.href = `http://www.strava.com/oauth/authorize?client_id=${client_id}&response_type=code&approval_prompt=force\
-  &scope=read_all,activity:read_all&redirect_uri=${callback}`;
+  &scope=${scope}&redirect_uri=${callback}`;
 }
 
 async function authorize() {
@@ -295,7 +297,44 @@ function addCredentials(db, id, scope, access_token, expiration, refresh_token) 
   };
 }
 
-function checkAuthentication(id) {
+async function checkAuthentication(id, scope) {
+  if(localStorage.getItem("user")) {
+    const transaction = db.transaction(["access", "refresh"], "readwrite");
+    const accessStore = transaction.objectStore("access");
+    const accessRequest = accessStore.get(id);
+
+    accessRequest.onsuccess = (acc_event) => {
+      const access_data = acc_event.target.result;
+      if(!valid_scope(access_data.scope, scope)) {  // if scope not sufficient, reauthorize to obtain the desired scope
+        alert(`Insufficient authorization.  Provide authorization for ${scope} scope`);
+        redirect(acc_event, scope);
+        authorize(); // TODO: not sure about this.  CONTINUE HERE.
+      }
+      // else if(access_data.expiration > (Date.now()/1000).toFixed(0)) {
+      //   const refreshRequest = refreshStore.get(id);
+
+      //   refreshRequest.onsuccess = (req_event) => {
+
+      //   }
+      // }
+    };
+  }
+
+  /* Tests whether the scope currently granted is sufficient for the required scope parameter
+      Parameters:
+        user_scope: The currently approved scope for the logged in user
+        required_scope: The required scope necessary for a call to the Strava API to be approved
+  */
+
+  function valid_scope(user_scope, required_scope) {
+    scopes = user_scope.split(",");
+    
+    if(scopes.includes(required_scope))
+      return true;
+
+    return false;
+  }
+
   const transaction = db.transaction(["access", "refresh"], "readwrite");
 
   transaction.oncomplete = (event) => {

@@ -6,10 +6,10 @@ header {
 body {
     max-width: 100%;
     height: 100vh;
-    background-image: url("./images/IMG_0650.png");
+    /* background-image: url("./images/IMG_0650.png");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; */
 }
 
 nav {
