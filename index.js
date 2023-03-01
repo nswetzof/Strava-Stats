@@ -57,10 +57,19 @@ async function run() {
     localStorage.setItem("user", athlete);
     
     addCredentials(db, athlete, scope, access_token, expiration, refresh_token);
-    checkAuthentication(athlete, "activity:write");
+    checkAuthentication(athlete, "activity:read_all");
   }).catch(error => {
     console.error(`Authorization Error: ${error}`);
   });
+
+  // await refresh(refresh_token).then(result => {
+  //   access_token = result.access_token;
+  //   refresh_token = result.refresh_token;
+
+  //   const expiration = result.expires_at;
+  //   console.log(`Refresh successful.  Refresh token: ${refresh_token}\nResponse:`);
+  //   console.log(result);
+  // })
 
   //checkAuthentication();
 
@@ -110,6 +119,30 @@ async function authorize() {
 
     return messagePromise;
   }
+}
+
+async function refresh(token) {
+  let url = new URL(`https://www.strava.com/api/v3/oauth/token`);
+
+  const messagePromise = await fetch(`https://www.strava.com/api/v3/oauth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type" : "application/json"
+    },
+
+    body : JSON.stringify( {
+      "client_id" : client_id,
+      "client_secret" : client_secret,
+      "grant_type" : "refresh_token",
+      "refresh_token" : token
+    } )
+  }).then(result => {return result.json();})
+  .then(data => {return data;})
+  .catch(error => {
+    console.error(`Refresh error: ${error}`);
+  });
+
+  return messagePromise;
 }
 
 async function getTokens(response) {
@@ -241,10 +274,12 @@ function openDB() {
     const accessStore = db.createObjectStore("access", {keyPath: "id"});
     accessStore.createIndex("access_token", "access_token", {unique: false});
     accessStore.createIndex("expiration", "expiration", {unique: false});
+    refreshStore.createIndex("scope", "scope", {unique : false});
 
     // Create a refresh token object store
     const refreshStore = db.createObjectStore("refresh", {keyPath: "id"});
     refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
+    refreshStore.createIndex("scope", "scope", {unique : false});
 
     console.log( `Success! Created the following object stores:`);
     for(let i = 0; i < db.objectStoreNames.length; i++) {
@@ -303,20 +338,35 @@ async function checkAuthentication(id, scope) {
     const accessStore = transaction.objectStore("access");
     const accessRequest = accessStore.get(id);
 
-    accessRequest.onsuccess = (acc_event) => {
+    accessRequest.onsuccess = (acc_event) => {  // TODO: need to add callback to Strava API function we're calling?
       const access_data = acc_event.target.result;
       if(!valid_scope(access_data.scope, scope)) {  // if scope not sufficient, reauthorize to obtain the desired scope
         alert(`Insufficient authorization.  Provide authorization for ${scope} scope`);
         redirect(acc_event, scope);
-        authorize(); // TODO: not sure about this.  CONTINUE HERE.
       }
       // else if(access_data.expiration > (Date.now()/1000).toFixed(0)) {
-      //   const refreshRequest = refreshStore.get(id);
+      else if(access_data.expiration > (0.0)) {  // TODO: FOR DEBUGGING.  USE LINE ABOVE WHEN FINISHED
+        const refreshStore = transaction.objectStore("refresh");
+        const refreshRequest = refreshStore.get(id);
 
-      //   refreshRequest.onsuccess = (req_event) => {
+        refreshRequest.onsuccess = (refresh_event) => {
+            const refresh_data = refresh_event.target.result;
+            refresh(refresh_data.refresh_token).then(addCredentials(db, refresh_data.id, scope,
+              refresh_data.access_token, refresh_data.expires_at, refresh_data.refresh_token));
+            console.log("Refresh data: ");
+            console.log(refresh_data);
+        };
+        refreshRequest.onerror = (refresh_event) => {
+          console.error(`Error retrieving refresh credentials: ${refresh_event.target.result.errorCode}`);
+        };
+      }
+      else {
+        return access_data;
+      }
+    };
 
-      //   }
-      // }
+    accessRequest.onerror = (acc_event) => {
+      console.error(`Error retrieving access credentials: ${acc_event.target.result.errorCode}`);
     };
   }
 
