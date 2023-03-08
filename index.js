@@ -14,7 +14,7 @@ const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
 let access_token = null;
 let refresh_token = null;
 let athlete = null;
-let scope = "readonly";
+let scope = "read";  // TODO: This is a test value for debugging, should be determined by the API function fetching data from the server
 
 const submitBtn = document.querySelector(".main_button");
 submitBtn.addEventListener("click", e => redirect(e, "read_all,activity:read_all"));
@@ -49,7 +49,8 @@ async function run() {
   // checkStoredCredentials(athlete, scope);
 
   if(localStorage.getItem("user")) {
-    const athlete = localStorage.getItem("user");
+    const athlete = parseInt(localStorage.getItem("user"));
+    console.log(`Retrieving credentials for athlete id ${athlete} of type ${typeof(athlete)}`);
     checkStoredCredentials(athlete, scope);
   }
   else {
@@ -355,7 +356,7 @@ function addCredentials(db, id, scope, access_token, expiration, refresh_token) 
 
 async function checkStoredCredentials(id, scope) {
   if(localStorage.getItem("user")) {  // TODO: probably is covered outside of this function and can be removed
-    const transaction = db.transaction(["access", "refresh"], "readwrite");
+    const transaction = db.transaction(["access", "refresh"], "readonly");
     const accessStore = transaction.objectStore("access");
     const accessRequest = accessStore.get(id);
 
@@ -364,7 +365,7 @@ async function checkStoredCredentials(id, scope) {
       console.log(access_data);
 
       if(!access_data) {
-          alert("Please log in to access the database.");
+          console.log("Please log in to access the database.");
       }
       else if(!valid_scope(access_data.scope, scope)) {  // if scope not sufficient, reauthorize to obtain the desired scope
         alert(`Insufficient authorization.  Provide authorization for ${scope} scope`);
@@ -385,9 +386,6 @@ async function checkStoredCredentials(id, scope) {
         refreshRequest.onerror = (refresh_event) => {
           console.error(`Error retrieving refresh credentials: ${refresh_event.target.result.errorCode}`);
         };
-      }
-      else {
-        return access_data;
       }
     };
 
