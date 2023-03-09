@@ -450,8 +450,8 @@ async function checkStoredCredentials(id, scope) {
       alert(`Insufficient authorization.  Provide authorization for ${scope} scope`);
       redirect(acc_event, scope);
     }
-    // else if(!access_data.access_token || access_data.expiration > (Date.now()/1000).toFixed(0)) {
-    else if(!access_data.access_token || access_data.expiration > (0.0)) {  // TODO: FOR DEBUGGING.  USE LINE ABOVE WHEN FINISHED
+    else if(!access_data.access_token || access_data.expiration < (Date.now()/1000).toFixed(0)) {
+    // else if(!access_data.access_token || access_data.expiration > (0.0)) {  // TODO: FOR DEBUGGING.  USE LINE ABOVE WHEN FINISHED
       const refreshStore = transaction.objectStore("refresh");
       const refreshRequest = refreshStore.get(id);
 
@@ -463,8 +463,6 @@ async function checkStoredCredentials(id, scope) {
             
             refresh(refresh_data.refresh_token)
             .then(result => {
-              // addCredentials(db, refresh_data.id, scope,
-              // refresh_data.access_token, refresh_data.expires_at, refresh_data.refresh_token);
               addCredentials(db, id, scope, result.access_token, result.expires_at, result.refresh_token);
             });
           }
