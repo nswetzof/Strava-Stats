@@ -22,7 +22,7 @@ loginBtn.addEventListener("click", e => redirect(e, "read_all,activity:read_all"
 const activityBtn = document.querySelector(".activities");
 activityBtn.addEventListener("click", e => {
   e.preventDefault();
-  getActivities();
+  getActivities((Date.now()/1000).toFixed(0), (Date.now()/1000).toFixed(0) - 100000);
 });
 
 const searchTerm = document.querySelector(".search");
@@ -56,7 +56,7 @@ async function run() {
 
   if(localStorage.getItem("user")) {
     const athlete = parseInt(localStorage.getItem("user"));
-    checkStoredCredentials(athlete, scope);
+    // checkStoredCredentials(athlete, scope);
   }
   else {
     await authorize().then((response) => {
@@ -212,17 +212,18 @@ async function getAthleteStats(access_token, athlete_id) {
   console.log(result);
 }
 
-function getActivities() {
+async function getActivities(before, after, page = 1, per_page = 30) { // TODO: FIX FUNCTION PARAMETERS
   let results = [];
 
-  const request = db.transaction(["access", "refresh"]).objectStore("access").get(15332212);
+  checkStoredCredentials(15332212, "read", getLoggedInAthleteActivities, before, after, 1, 3);
+  // const request = db.transaction(["access", "refresh"]).objectStore("access").get(15332212);
 
-  request.onsuccess = (event) => {
-    console.log(request.result);
-  }
-  request.onerror = (error) => {
-    console.error(`Error accessing database: ${error}`);
-  }
+  // request.onsuccess = (event) => {
+  //   console.log(request.result);
+  // }
+  // request.onerror = (error) => {
+  //   console.error(`Error accessing database: ${error}`);
+  // }
 }
 
 async function getAllAthleteActivities(access_token, before = (Date.now()/1000).toFixed(0), after = 0, page = 1, max_pages = 1000) {
@@ -247,6 +248,8 @@ async function getLoggedInAthleteActivities(access_token, before = (Date.now()/1
   const result = await readData(access_token, url).then(data => {
     console.log("data is: ");
     console.log(data);
+    addActivityData(data);
+
     return data;
   }).catch(error => {
     console.error(`Error: ${error}`);
@@ -256,7 +259,7 @@ async function getLoggedInAthleteActivities(access_token, before = (Date.now()/1
 }
 
 /*
-Uses fetch to obtain data in JSON format from the strava api
+Uses fetch to obtain data in JSON format from the strava API
 Inputs: 
   access_token - The unique access token given to a user in order to access the api
   url - URL to be accessed
@@ -323,7 +326,7 @@ function openDB() {
     refreshStore.createIndex("scope", "scope", {unique : false});
 
     // Create athlete activities object store
-    const activityStore = db.createObjectStore("activities", {keyPath : "activity_id"})
+    const activityStore = db.createObjectStore("activities", {keyPath : "id"})
     activityStore.createIndex("external_id", "external_id", {unique : false});
     activityStore.createIndex("upload_id", "upload_id", {unique : false});
     activityStore.createIndex("athlete", "athlete", {unique : true});
@@ -434,10 +437,12 @@ function addCredentials(db, id, scope, access_token, expiration, refresh_token) 
   };
 }
 
-async function checkStoredCredentials(id, scope) {
+function checkStoredCredentials(id, scope, callback, ...args) {
   const transaction = db.transaction(["access", "refresh"], "readonly");
   const accessStore = transaction.objectStore("access");
   const accessRequest = accessStore.get(id);
+
+  useDatabase();
 
   accessRequest.onsuccess = (acc_event) => {
     const access_data = accessRequest.result;
@@ -464,7 +469,9 @@ async function checkStoredCredentials(id, scope) {
             refresh(refresh_data.refresh_token)
             .then(result => {
               addCredentials(db, id, scope, result.access_token, result.expires_at, result.refresh_token);
-            });
+              });
+
+              callback(refresh_data.access_token, args);
           }
           else {
             alert(`Login to retrieve login credentials`);
@@ -475,20 +482,22 @@ async function checkStoredCredentials(id, scope) {
         console.error(`Error retrieving refresh credentials: ${refresh_event.target.result.errorCode}`);
       };
     }
+    else
+      callback(access_data.access_token, args);
   };
 
   accessRequest.onerror = (acc_event) => {
     console.error(`Error retrieving access credentials: ${acc_event.target.result.errorCode}`);
   };
 
-  /* Tests whether the scope currently granted is sufficient for the required scope parameter
-      Parameters:
-        user_scope: The currently approved scope for the logged in user
-        required_scope: The required scope necessary for a call to the Strava API to be approved
-  */
-
+  
 }
 
+/* Tests whether the scope currently granted is sufficient for the required scope parameter
+    Parameters:
+      user_scope: The currently approved scope for the logged in user
+      required_scope: The required scope necessary for a call to the Strava API to be approved
+*/
 function valid_scope(user_scope, required_scope) {
   scopes = user_scope.split(",");
   
@@ -499,26 +508,35 @@ function valid_scope(user_scope, required_scope) {
 }
 
 function addActivityData(data) {
+  useDatabase();
+  const transaction = db.transaction(["activities"], "readwrite");
 
+  transaction.oncomplete = (event) => {
+    console.log("Activity data successfully added to database.");
+  };
+  transaction.onerror = (event) => {
+    console.log(`Transaction error: ${event.target.errorCode}`);
+  }
+
+  const activityStore = transaction.objectStore("activities");
+  data.forEach(activity => {
+    // console.log(activity);
+    const activity_request = activityStore.put(activity);
+
+    activity_request.onsuccess = (event) => {
+      console.log(`Added ${activity.name} to database.`);
+    };
+    activity_request.onerror = (event) => {
+      
+      console.error(`Error adding activity: ${event.target.error}`);
+    }
+  });
 }
 
-// const transaction = db.transaction(["access", "refresh"], "readwrite");
+function removeActivityData(id) {
+  throw new Error("Function has not been implemented");
+}
 
-// transaction.oncomplete = (event) => {
-//   console.log("Transaction completed");  // TODO: update message
-// }
-// transaction.onerror = (event) => {
-//   console.error(`Error in transaction: ${event.target.result.errorCode}`);
-// }
-
-// const accessStore = transaction.objectStore("access");
-
-// const request = accessStore.get(id);
-
-// request.onsuccess = (event) => {
-//   let access =  event.target.result;
-//   console.log(access);
-// }
 // var StravaApiV3 = require('strava_api_v3');
 // var defaultClient = StravaApiV3.ApiClient.instance;
 
