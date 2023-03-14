@@ -15,12 +15,19 @@ body {
 nav {
     border-top: dashed grey 1px;
     border-bottom: dashed grey 1px;
+    display: grid;
 }
+
+/* .login {
+    display: inline-flex;
+    justify-content: flex-end;
+} */
 
 nav ul {
     display: flex;
     list-style-type: none;
     flex-flow: row wrap;
+    width: 50%;
 }
 
 nav ul li {
