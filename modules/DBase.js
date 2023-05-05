@@ -1,12 +1,11 @@
 // export * from "Dbase.js";
 // import * as Index from "../index.js";
-import {refresh, redirect} from "../index.js";
+import {Auth} from "./Authenticate.js";
 
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
 
 let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
-// openDB();
 
 function useDatabase() {
   db.onversionchange = (event) => {
@@ -15,7 +14,7 @@ function useDatabase() {
   };
 }
 
-function openDB(callback) {
+function openDB(database, callback) {
   const request = window.indexedDB.open("AthleteInformation", 1);
 
   request.onblocked = (event) => {
@@ -29,31 +28,31 @@ function openDB(callback) {
   request.onsuccess = (event) => {
     console.log("Successfully opened the database.");
 
-    db = event.target.result;
+    database = event.target.result;
 
     callback(); // execute callback function
   };
   
   request.onupgradeneeded = (event) => {
     // Save the IDBDatabase interface
-    db = event.target.result;
+    database = event.target.result;
     
-    db.onerror = (event) => {
+    database.onerror = (event) => {
       console.error(`Database error: ${event.target.errorCode}`);
     }
 
     // Create an access token object store
-    const accessStore = db.createObjectStore("access", {keyPath: "id"});
+    const accessStore = database.createObjectStore("access", {keyPath: "id"});
     accessStore.createIndex("access_token", "access_token", {unique: false});
     accessStore.createIndex("expiration", "expiration", {unique: false});
 
     // Create a refresh token object store
-    const refreshStore = db.createObjectStore("refresh", {keyPath: "id"});
+    const refreshStore = database.createObjectStore("refresh", {keyPath: "id"});
     refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
     refreshStore.createIndex("scope", "scope", {unique : false});
 
     // Create athlete activities object store
-    const activityStore = db.createObjectStore("activities", {keyPath : "id"})
+    const activityStore = database.createObjectStore("activities", {keyPath : "id"})
     activityStore.createIndex("external_id", "external_id", {unique : false});
     activityStore.createIndex("upload_id", "upload_id", {unique : false});
     activityStore.createIndex("athlete", "athlete", {unique : true});
@@ -97,8 +96,8 @@ function openDB(callback) {
 
 
     console.log( `Success! Created the following object stores:`);
-    for(let i = 0; i < db.objectStoreNames.length; i++) {
-      console.log(db.objectStoreNames[i]);
+    for(let i = 0; i < database.objectStoreNames.length; i++) {
+      console.log(database.objectStoreNames[i]);
     }
   };
 }
@@ -178,7 +177,7 @@ function checkStoredCredentials(id, scope, callback, ...args) {
           }
           else {
             alert(`Login to retrieve login credentials`);
-            redirect(refresh_event, scope);
+            Auth.redirect(refresh_event, scope);
           }
       };
       refreshRequest.onerror = (refresh_event) => {

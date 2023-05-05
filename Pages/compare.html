@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Analysis</title>
+        <meta name="author" content="Nathan Swetzof">
+        <meta name="description" content="View detailed breakdown of recorded activities.">
+        <link rel="stylesheet" href="../Styles/compare_style.css">
+        <script type="module" src="../scripts/compare.js"></script>
+        <!-- <script type="module" src="../modules/DBase.js"></script> -->
+        <!-- <script type="module" src="../index.js"></script> -->
+    </head>
+
+    <body>
+        <h1 class="title">Analysis</h1>
+
+        <h2 id="user_header">User</h2>
+
+        <form>
+          <div class="activity_filters">
+            <div class="search">
+              <label for="keywords">Keywords:</label>
+              <input type="search" id="keywords" name="keywords" placeholder="My morning workout" />
+
+              <button type="submit" class="searchBtn">Search</button>
+            </div>
+
+            <div class="options">
+              <div class="commute_options">
+                <input type="checkbox" id="commute" name="commute" value="commute" />
+                <label for="commute">Commute</label>
+              </div>  
+
+              <div class="private_options">
+                <input type="checkbox" id="private" name="private" value="private" />
+                <label for="private">Private</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="search_filter">
+            <label for="sport">Sport:</label>
+            <select name="sport" id="sport">
+              <optgroup label="Foot Sports">
+                <option>Run</option>
+                <option>Trail Run</option>
+                <option>Walk</option>
+                <option selected>Hike</option>
+                <option>Virtual Run</option>
+              </optgroup>
+              <optgroup label="Cycle Sports">
+                <option>Ride</option>
+                <option>Mountain Bike Ride</option>
+                <option>Gravel Bike Ride</option>
+                <option>E-Bike Ride</option>
+                <option>E-Mountain Bike Ride</option>
+                <option>Velomobile</option>
+                <option>Virtual Ride</option>
+              </optgroup>
+              <optgroup label="Water Sports">
+                <option>Canoe</option>
+                <option>Kayak</option>
+                <option>Kitesurf Session</option>
+                <option>Row</option>
+                <option>Stand Up Paddle</option>
+                <option>Surf</option>
+                <option>Swim</option>
+                <option>Windsurf Session</option>
+              </optgroup>
+              <optgroup label="Winter Sports">
+                <option>Ice Skate</option>
+                <option>Alpine Ski</option>
+                <option>Backcountry Ski</option>
+                <option>Nordic Ski</option>
+                <option>Snowboard</option>
+                <option>Snowshoe</option>
+              </optgroup>
+              <optgroup label="Other Sports">
+                <option>Golf</option>
+                <option>Handcycle</option>
+                <option>Inline Skate</option>
+                <option>Rock Climb</option>
+                <option>Roller Ski</option>
+                <option>Wheelchair</option>
+                <option>Crossfit</option>
+                <option>Elliptical</option>
+                <option>Sailing</option>
+                <option>Skateboarding</option>
+                <option>Soccer</option>
+                <option>Stair Stepper</option>
+                <option>Weight Training</option>
+                <option>Yoga</option>
+                <option>Workout</option>
+                <option>Tennis</option>
+                <option>Pickleball</option>
+                <option>Racquetball</option>
+                <option>Squash</option>
+                <option>Badminton</option>
+                <option>Table Tennis</option>
+                <option>HIIT</option>
+                <option>Pilates</option>
+                <option>Virtual Row</option>
+              </optgroup>
+            </select>
+              
+            <!-- <input type="text" id="input2" name="input2"> -->
+          </div>
+      </form>
+      
+      <section class="activity_summary">
+        <h1 class="activity_header">Activities</h1>
+        <div class="activity_list"></div>
+      </section>
+
+    </body>
+</html>
