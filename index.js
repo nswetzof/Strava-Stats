@@ -37,7 +37,7 @@ searchForm.addEventListener("submit", e => {
 });
 
 // let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
-// DBase.openDB();
+DBase.openDB(run);
 
 // redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
 
@@ -217,6 +217,7 @@ async function getAthleteStats(access_token, athlete_id) {
 async function getActivities(before, after, page = 1, per_page = 30) { // TODO: FIX FUNCTION PARAMETERS
   let results = [];
 
+  console.log("test");
   DBase.checkStoredCredentials(15332212, "read", getLoggedInAthleteActivities, before, after, 1, 3);
 }
 
@@ -276,6 +277,8 @@ async function readData(access_token, url, read_all = true) {
 
   return result;
 }
+
+export {refresh};
 
 // var StravaApiV3 = require('strava_api_v3');
 // var defaultClient = StravaApiV3.ApiClient.instance;
