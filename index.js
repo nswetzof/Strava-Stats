@@ -278,7 +278,7 @@ async function readData(access_token, url, read_all = true) {
   return result;
 }
 
-export {refresh};
+export {refresh, redirect};
 
 // var StravaApiV3 = require('strava_api_v3');
 // var defaultClient = StravaApiV3.ApiClient.instance;

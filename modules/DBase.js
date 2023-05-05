@@ -1,5 +1,6 @@
 // export * from "Dbase.js";
-import * as Index from "../index.js";
+// import * as Index from "../index.js";
+import {refresh, redirect} from "../index.js";
 
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
@@ -168,7 +169,7 @@ function checkStoredCredentials(id, scope, callback, ...args) {
             console.log("Refresh data: ");
             console.log(refresh_data);
             
-            Index.refresh(refresh_data.refresh_token)
+            refresh(refresh_data.refresh_token)
             .then(result => {
               addCredentials(db, id, scope, result.access_token, result.expires_at, result.refresh_token);
               });
