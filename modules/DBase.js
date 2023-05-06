@@ -1,11 +1,9 @@
-// export * from "Dbase.js";
-// import * as Index from "../index.js";
 import {Auth} from "./Authenticate.js";
 
 const DB_NAME = "AccessTokens";
 const DB_VERSION = 1;
 
-let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
+let db = {}; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
 
 function useDatabase() {
   db.onversionchange = (event) => {
@@ -14,7 +12,8 @@ function useDatabase() {
   };
 }
 
-function openDB(database, callback) {
+function openDB(callback) {
+  console.log("Opening database...");
   const request = window.indexedDB.open("AthleteInformation", 1);
 
   request.onblocked = (event) => {
@@ -28,31 +27,31 @@ function openDB(database, callback) {
   request.onsuccess = (event) => {
     console.log("Successfully opened the database.");
 
-    database = event.target.result;
+    db.reference = event.target.result;
 
     callback(); // execute callback function
   };
   
   request.onupgradeneeded = (event) => {
     // Save the IDBDatabase interface
-    database = event.target.result;
+    db.reference = event.target.result;
     
     database.onerror = (event) => {
       console.error(`Database error: ${event.target.errorCode}`);
     }
 
     // Create an access token object store
-    const accessStore = database.createObjectStore("access", {keyPath: "id"});
+    const accessStore = db.createObjectStore("access", {keyPath: "id"});
     accessStore.createIndex("access_token", "access_token", {unique: false});
     accessStore.createIndex("expiration", "expiration", {unique: false});
 
     // Create a refresh token object store
-    const refreshStore = database.createObjectStore("refresh", {keyPath: "id"});
+    const refreshStore = db.createObjectStore("refresh", {keyPath: "id"});
     refreshStore.createIndex("refresh_token", "refresh_token", {unique: false});
     refreshStore.createIndex("scope", "scope", {unique : false});
 
     // Create athlete activities object store
-    const activityStore = database.createObjectStore("activities", {keyPath : "id"})
+    const activityStore = db.createObjectStore("activities", {keyPath : "id"})
     activityStore.createIndex("external_id", "external_id", {unique : false});
     activityStore.createIndex("upload_id", "upload_id", {unique : false});
     activityStore.createIndex("athlete", "athlete", {unique : true});
@@ -96,8 +95,8 @@ function openDB(database, callback) {
 
 
     console.log( `Success! Created the following object stores:`);
-    for(let i = 0; i < database.objectStoreNames.length; i++) {
-      console.log(database.objectStoreNames[i]);
+    for(let i = 0; i < db.reference.objectStoreNames.length; i++) {
+      console.log(db.reference.objectStoreNames[i]);
     }
   };
 }
@@ -114,7 +113,7 @@ function openDB(database, callback) {
 
 ***********************************************************************************/
 function addCredentials(db, id, scope, access_token, expiration, refresh_token) {
-  const transaction = db.transaction(["access", "refresh"], "readwrite");
+  const transaction = db.reference.transaction(["access", "refresh"], "readwrite");
   const accessStore = transaction.objectStore("access");
   const refreshStore = transaction.objectStore("refresh");
   
@@ -140,7 +139,7 @@ function addCredentials(db, id, scope, access_token, expiration, refresh_token) 
 }
 
 function checkStoredCredentials(id, scope, callback, ...args) {
-  const transaction = db.transaction(["access", "refresh"], "readonly");
+  const transaction = db.reference.transaction(["access", "refresh"], "readonly");
   const accessStore = transaction.objectStore("access");
   const accessRequest = accessStore.get(id);
 
@@ -155,7 +154,7 @@ function checkStoredCredentials(id, scope, callback, ...args) {
     }
     else if(!valid_scope(access_data.scope, scope)) {  // if scope not sufficient, reauthorize to obtain the desired scope
       alert(`Insufficient authorization.  Provide authorization for ${scope} scope`);
-      redirect(acc_event, scope);
+      Auth.redirect(acc_event, scope);
     }
     else if(!access_data.access_token || access_data.expiration < (Date.now()/1000).toFixed(0)) {
     // else if(!access_data.access_token || access_data.expiration > (0.0)) {  // TODO: FOR DEBUGGING.  USE LINE ABOVE WHEN FINISHED
@@ -168,7 +167,7 @@ function checkStoredCredentials(id, scope, callback, ...args) {
             console.log("Refresh data: ");
             console.log(refresh_data);
             
-            refresh(refresh_data.refresh_token)
+            Auth.refresh(refresh_data.refresh_token)
             .then(result => {
               addCredentials(db, id, scope, result.access_token, result.expires_at, result.refresh_token);
               });
@@ -206,7 +205,7 @@ function valid_scope(user_scope, required_scope) {
 
 function addActivityData(data) {
   useDatabase();
-  const transaction = db.transaction(["activities"], "readwrite");
+  const transaction = db.reference.transaction(["activities"], "readwrite");
 
   transaction.oncomplete = (event) => {
     console.log("Activity data successfully added to database.");

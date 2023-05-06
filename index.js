@@ -21,7 +21,7 @@ let athlete = null;
 let scope = "read";  // TODO: This is a test value for debugging, should be determined by the API function fetching data from the server
 
 const loginBtn = document.querySelector(".main_button");
-loginBtn.addEventListener("click", e => redirect(e, "read_all,activity:read_all"));
+loginBtn.addEventListener("click", e => Auth.redirect(e, "read_all,activity:read_all"));
 
 const activityBtn = document.querySelector(".activities");
 activityBtn.addEventListener("click", e => {
@@ -39,8 +39,7 @@ searchForm.addEventListener("submit", e => {
 });
 
 // let db; // hold an instance of a db object to store the IndexedDB login data and athlete statistics
-let db;
-DBase.openDB(db, run);
+DBase.openDB(run);
 
 // redirectBtn.addEventListener("click", e => redirect(e));  // TODO: FIGURE THIS PART OUT.  CALLS FUNCTION WHEN LINK PRESSED FROM AUTH ERROR PAGE
 
@@ -75,7 +74,7 @@ async function run() {
       
       localStorage.setItem("user", athlete);
       
-      DBase.addCredentials(db, athlete, scope, access_token, expiration, refresh_token);
+      DBase.addCredentials(DBase.db.reference, athlete, scope, access_token, expiration, refresh_token);
       // checkAuthentication(athlete, "activity:read_all");
     }).catch(error => {
       console.error(`Authorization Error: ${error}`);

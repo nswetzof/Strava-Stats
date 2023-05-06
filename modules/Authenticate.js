@@ -1,3 +1,5 @@
+import {client_id, client_secret} from "./Globals.js";
+
 class Auth {
     /* Authorization functions (getTokens is unused) */
     

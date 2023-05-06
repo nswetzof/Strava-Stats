@@ -1,4 +1,5 @@
 import * as DBase from "./DBase.js";
+import {client_id} from "./Globals.js";
 
 class Strava {
     /* API Calls */
