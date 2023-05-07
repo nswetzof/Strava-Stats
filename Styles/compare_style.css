@@ -1,0 +1,78 @@
+.title {
+    text-align: center;
+    border-bottom: 3px solid grey;
+    margin-bottom: 1.5em;
+}
+
+.activity_header {
+    text-align: center;
+    font-size: 2em;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+    font-size: 100%;
+    padding: 0;
+    margin: 3px 1px;
+    box-sizing: border-box;
+}
+
+form {
+    display: flex;
+}
+
+.activity_filters {
+    display: block;
+    padding-right: 25px;
+    /* flex-flow: row wrap; */
+}
+
+.options {
+    display: flex;
+    flex-flow: row wrap;
+}
+ .search *,
+ .search_filter * {
+    height: 30px;
+ }
+
+ .search button {
+    width: 80px;
+ }
+
+select[id="sport"] {
+    width: 200px;
+ }
+
+ .activity_list table {
+    table-layout: fixed;
+    width: 80%;
+    border-collapse: collapse;
+ }
+
+ .activity_list table thead th:nth-child(1) {
+    width: 10%;
+ }
+
+ .activity_list table thead th:nth-child(2) {
+    width: 15%;
+ }
+
+ .activity_list table thead th:nth-child(3) {
+    width: 30%;
+ }
+
+ .activity_list table thead th:nth-child(4) {
+    width: 15%;
+ }
+
+ .activity_list table thead th:nth-child(5) {
+    width: 15%;
+ }
+
+ .activity_list table thead th:nth-child(6) {
+    width: 15%;
+ }
