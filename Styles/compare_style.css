@@ -9,6 +9,12 @@
     font-size: 2em;
 }
 
+#map {
+   margin-top: 50px;
+   height: 300px;
+   width: 300px;
+}
+
 button,
 input,
 select,

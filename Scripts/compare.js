@@ -47,8 +47,19 @@ function getFilteredActivities(sportType, callback=null) {
  * activityList: Array containing activities to be displayed
  */
 function displayActivities(activityList) {
+    
+    /* Create map ******************************************************************************** */
+    let polylines = createMultiline(activityList);
+    let map = L.map('map').fitBounds(polylines.getBounds()); // generate map with routes displayed
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    /******************************************************************************************** */
+
     console.log(activityList);
-    const tableElement = document.querySelector(".activity_list table");
+    const tableElement = document.querySelector("#activity_table");
 
     // remove any previously displayed data from the list
     while(tableElement.firstChild)
@@ -117,4 +128,25 @@ function displayActivities(activityList) {
 
         tableBodyElement.appendChild(rowElement);
     });
+}
+
+/*
+* Create leaflet.js MultiPolyline object from an array of Polyline objects
+*/
+function createMultiline(activityArray) {
+    let multiLine = [];
+    activityArray.forEach(activity => {
+        multiLine.push(L.Polyline.fromEncoded(activity.map.summary_polyline).getLatLngs());
+    });
+
+    return L.polyline(multiLine);
+}
+
+/*
+* Show polylines from an array of Strava activities on a leaflet.js map
+* map: The leaflet.js map object to be modified
+* activityArray: The array of activities
+*/
+function showOnMap(map, activityArray) {
+    
 }
