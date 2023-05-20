@@ -116,6 +116,7 @@ function displayActivities(activityList) {
     
     activityList.forEach(element => {
         const rowElement = document.createElement("tr");
+        rowElement.setAttribute("id", element.id);
 
         const checkboxElement = document.createElement("td");
         const sportData = document.createElement("td");
@@ -127,7 +128,6 @@ function displayActivities(activityList) {
 
         const checkbox = document.createElement("input");
         checkbox.setAttribute("type", "checkbox");
-        checkbox.setAttribute("id", element.id);
         checkboxElement.appendChild(checkbox);
 
         checkbox.addEventListener("change", event => {
@@ -180,6 +180,12 @@ function showOnMap(map, activity) {
     polylineMap.set(activity.id, polyline);
 
     map.fitBounds(checkedPolylines.getBounds());
+
+    polyline.addEventListener("click", event => {
+        const row = document.querySelector(`tr[id="${activity.id}"]`);
+
+        highlightAndFade(row);
+    });
 }
 
 /*
@@ -195,3 +201,22 @@ function removeFromMap(map, id) {
     if(polylineMap.size > 0)
         map.fitBounds(checkedPolylines.getBounds());
 }
+
+/**
+ * Highlights and fades the background color of a an html element
+ *
+ * @param {HTMLElement} element - The element being highlighted.
+ */
+function highlightAndFade(element) {
+    const tr = element;
+    
+    // Apply highlight style
+    tr.style.backgroundColor = 'yellow';
+  
+    // Remove highlight over 2 seconds
+    setTimeout(function() {
+      tr.style.transition = 'background-color 2s';
+      tr.style.backgroundColor = 'transparent';
+    });
+  }
+  
