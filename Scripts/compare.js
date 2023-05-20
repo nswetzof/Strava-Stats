@@ -11,6 +11,9 @@ const sportSelect = document.querySelector("#sport");
 // let db;
 // dBase.openDB(db, getFilteredActivities("Hike"));
 
+let checkedPolylines = L.featureGroup([]);  // stores all activity polylines that are checked on the page
+let polylineMap = new Map();
+
 searchBtn.addEventListener("click", event => {
     event.preventDefault();
     dBase.openDB(listActivities);
@@ -56,6 +59,8 @@ function displayActivities(activityList) {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
+
+    checkedPolylines.addTo(map);
     /******************************************************************************************** */
 
     console.log(activityList);
@@ -74,6 +79,7 @@ function displayActivities(activityList) {
     tableHeadElement.appendChild(tableRowElement);
     
     // make headers
+    const checkboxHeader = document.createElement("th");
     const sportHeader = document.createElement("th");
     const dateHeader = document.createElement("th");
     const titleHeader = document.createElement("th");
@@ -81,6 +87,8 @@ function displayActivities(activityList) {
     const distanceHeader = document.createElement("th");
     const elevationHeader = document.createElement("th");
     
+    checkboxHeader.textContent = "Show";
+    checkboxHeader.setAttribute("scope", "col");
     sportHeader.textContent = "Sport";
     sportHeader.setAttribute("scope", "col");
     dateHeader.textContent = "Date";
@@ -94,6 +102,7 @@ function displayActivities(activityList) {
     elevationHeader.textContent = "Elevation";
     elevationHeader.setAttribute("scope", "col");
     
+    tableRowElement.appendChild(checkboxHeader);
     tableRowElement.appendChild(sportHeader);
     tableRowElement.appendChild(dateHeader);
     tableRowElement.appendChild(titleHeader);
@@ -105,6 +114,7 @@ function displayActivities(activityList) {
     activityList.forEach(element => {
         const rowElement = document.createElement("tr");
 
+        const checkboxElement = document.createElement("td");
         const sportData = document.createElement("td");
         const dateData = document.createElement("td");
         const titleData = document.createElement("td");
@@ -112,12 +122,26 @@ function displayActivities(activityList) {
         const distanceData = document.createElement("td");
         const elevationData = document.createElement("td");
 
+        const checkbox = document.createElement("input");
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("id", element.id);
+        checkboxElement.appendChild(checkbox);
+
+        checkbox.addEventListener("change", event => {
+            if(event.target.checked)
+                showOnMap(map, element);
+            else
+                removeFromMap(map, element.id);
+        });
+
         sportData.textContent = element.sport_type;
         dateData.textContent = element.start_date_local;
         titleData.textContent = element.name;
         timeData.textContent = element.moving_time;
         distanceData.textContent = `${element.distance} ${units.distance}`;
         elevationData.textContent = `${element.total_elevation_gain} ${units.elevation}`;
+
+        rowElement.appendChild(checkboxElement);
 
         rowElement.appendChild(sportData);
         rowElement.appendChild(dateData);
@@ -143,10 +167,26 @@ function createMultiline(activityArray) {
 }
 
 /*
-* Show polylines from an array of Strava activities on a leaflet.js map
-* map: The leaflet.js map object to be modified
-* activityArray: The array of activities
+* Show polyline from a Strava activity on a leaflet.js map
+* map: The map to display the activity on
+* activity: The activity to display
 */
-function showOnMap(map, activityArray) {
-    
+function showOnMap(map, activity) {
+    console.log(map.getPane("overlayPane"));
+    let polyline = L.polyline(L.Polyline.fromEncoded(activity.map.summary_polyline).getLatLngs()).addTo(checkedPolylines);
+    polylineMap.set(activity.id, polyline);
+
+    map.fitBounds(checkedPolylines.getBounds());
+}
+
+/*
+* Remove polyline representing Strava activity from a leaflet.js map
+* map: The map containing the polyline
+* id: The Strava activity id to remove.
+*/
+function removeFromMap(map, id) {
+    polylineMap.get(id).remove();
+    polylineMap.delete(id);
+
+    // map.fitBounds(checkedPolylines.getBounds());
 }

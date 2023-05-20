@@ -59,20 +59,24 @@ select[id="sport"] {
     border-collapse: collapse;
  }
 
+ td {
+   min-height: 1em;  /* TODO: FIX THIS TO MAKE OVERFLOWING CELLS WRAP */
+ }
+
  .activity_list table thead th:nth-child(1) {
-    width: 10%;
+   width: 5%;
  }
 
  .activity_list table thead th:nth-child(2) {
-    width: 15%;
+    width: 10%;
  }
 
  .activity_list table thead th:nth-child(3) {
-    width: 30%;
+    width: 10%;
  }
 
  .activity_list table thead th:nth-child(4) {
-    width: 15%;
+    width: 30%;
  }
 
  .activity_list table thead th:nth-child(5) {
@@ -80,5 +84,9 @@ select[id="sport"] {
  }
 
  .activity_list table thead th:nth-child(6) {
+    width: 15%;
+ }
+
+ .activity_list table thead th:nth-child(7) {
     width: 15%;
  }
