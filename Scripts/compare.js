@@ -13,6 +13,7 @@ const sportSelect = document.querySelector("#sport");
 
 let checkedPolylines = L.featureGroup([]);  // stores all activity polylines that are checked on the page
 let polylineMap = new Map();
+let map = L.map('map');  // generate map to display user selected routes
 
 searchBtn.addEventListener("click", event => {
     event.preventDefault();
@@ -46,14 +47,15 @@ function getFilteredActivities(sportType, callback=null) {
 }
 
 /*
- * Lists filtered athlete activities in a list at the bottom of the page
+ * Lists filtered athlete activities in a list at the bottom of the page and creates map for activity displays
  * activityList: Array containing activities to be displayed
  */
 function displayActivities(activityList) {
     
     /* Create map ******************************************************************************** */
     let polylines = createMultiline(activityList);
-    let map = L.map('map').fitBounds(polylines.getBounds()); // generate map with routes displayed
+    map.fitBounds(polylines.getBounds()); // generate map with routes displayed
+    document.querySelector(".map").style.visibility = "visible";
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -63,7 +65,8 @@ function displayActivities(activityList) {
     checkedPolylines.addTo(map);
     /******************************************************************************************** */
 
-    console.log(activityList);
+    // console.log(activityList); // TODO: For debugging.  Delete when done.
+    document.querySelector(".activity_summary").style.visibility = "visible";
     const tableElement = document.querySelector("#activity_table");
 
     // remove any previously displayed data from the list
@@ -185,8 +188,10 @@ function showOnMap(map, activity) {
 * id: The Strava activity id to remove.
 */
 function removeFromMap(map, id) {
-    polylineMap.get(id).remove();
+    polylineMap.get(id).removeFrom(checkedPolylines);
     polylineMap.delete(id);
 
-    // map.fitBounds(checkedPolylines.getBounds());
+    // resize the map if at least one box is checked
+    if(polylineMap.size > 0)
+        map.fitBounds(checkedPolylines.getBounds());
 }
