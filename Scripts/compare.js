@@ -1,6 +1,5 @@
 import * as dBase from "../Modules/DBase.js";
 import {units} from "../Modules/Globals.js";
-import {Strava} from "../Modules/StravaCalls.js";
 
 const keyWordElement = document.querySelector("keywords");
 const searchBtn = document.querySelector(".searchBtn");
@@ -46,9 +45,9 @@ function getFilteredActivities(sportType, callback=null) {
     }
 }
 
-/*
+/**
  * Lists filtered athlete activities in a list at the bottom of the page and creates map for activity displays
- * activityList: Array containing activities to be displayed
+ * @param activityList Array containing activities to be displayed
  */
 function displayActivities(activityList) {
     
@@ -157,8 +156,9 @@ function displayActivities(activityList) {
     });
 }
 
-/*
+/**
 * Create leaflet.js MultiPolyline object from an array of Polyline objects
+* @param activityArray List of Strava activities
 */
 function createMultiline(activityArray) {
     let multiLine = [];
@@ -169,10 +169,10 @@ function createMultiline(activityArray) {
     return L.polyline(multiLine);
 }
 
-/*
+/**
 * Show polyline from a Strava activity on a leaflet.js map
-* map: The map to display the activity on
-* activity: The activity to display
+* @param map The map to display the activity on
+* @param activity The activity to display
 */
 function showOnMap(map, activity) {
     console.log(map.getPane("overlayPane"));
@@ -188,10 +188,10 @@ function showOnMap(map, activity) {
     });
 }
 
-/*
+/**
 * Remove polyline representing Strava activity from a leaflet.js map
-* map: The map containing the polyline
-* id: The Strava activity id to remove.
+* @param map The map containing the polyline
+* @param {String} id The Strava activity id to remove.
 */
 function removeFromMap(map, id) {
     polylineMap.get(id).removeFrom(checkedPolylines);
@@ -205,7 +205,7 @@ function removeFromMap(map, id) {
 /**
  * Highlights and fades the background color of a an html element
  *
- * @param {HTMLElement} element - The element being highlighted.
+ * @param {HTMLElement} element The element being highlighted.
  */
 function highlightAndFade(element) {
     const tr = element;
