@@ -1,18 +1,14 @@
 import * as dBase from "../Modules/DBase.js";
 import {units} from "../Modules/Globals.js";
 
-const keyWordElement = document.querySelector("keywords");
 const searchBtn = document.querySelector(".searchBtn");
-
-const activityList = document.querySelector(".activity_list");
 const sportSelect = document.querySelector("#sport");
-
-// let db;
-// dBase.openDB(db, getFilteredActivities("Hike"));
 
 let checkedPolylines = L.featureGroup([]);  // stores all activity polylines that are checked on the page
 let polylineMap = new Map();
 let map = L.map('map');  // generate map to display user selected routes
+
+dBase.openDB(listActivities);
 
 searchBtn.addEventListener("click", event => {
     event.preventDefault();
@@ -137,11 +133,25 @@ function displayActivities(activityList) {
         });
 
         sportData.textContent = element.sport_type;
-        dateData.textContent = element.start_date_local;
+        dateData.textContent = formattedDate(new Date(element.start_date_local));
         titleData.textContent = element.name;
-        timeData.textContent = element.moving_time;
-        distanceData.textContent = `${element.distance} ${units.distance}`;
-        elevationData.textContent = `${element.total_elevation_gain} ${units.elevation}`;
+
+        const date = new Date(element.moving_time * 1000);
+
+        // formate depending on if moving time > 24 hours
+        if(element.moving_time <= 86400)
+            timeData.textContent = new Date(element.moving_time * 1000).toISOString().slice(11, 19);
+        else
+            timeDate.textContent = `${Math.floor(element.moving_time / 86400)} days,
+             ${date.toISOString().slice(11, 19)}`;
+        
+        distanceData.textContent = `${(parseFloat((units.distance === "mi") ?
+         element.distance/.3048/5280 : element.distance / 1000, 4).toFixed(2))}
+         ${units.distance}`;
+
+        
+        elevationData.textContent = `${parseFloat(units.elevation == "ft" ? element.total_elevation_gain / .3048 : element.total_elevation_gane)
+            .toFixed(2)} ${units.elevation}`;
 
         rowElement.appendChild(checkboxElement);
 
@@ -154,6 +164,10 @@ function displayActivities(activityList) {
 
         tableBodyElement.appendChild(rowElement);
     });
+}
+
+function formattedDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()).padStart(1, "0") + 1}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /**
