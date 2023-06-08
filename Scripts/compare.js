@@ -3,6 +3,7 @@ import {units} from "../Modules/Globals.js";
 
 const searchBtn = document.querySelector(".searchBtn");
 const sportSelect = document.querySelector("#sport");
+const searchInput = document.querySelector("#keywords");
 
 let checkedPolylines = L.featureGroup([]);  // stores all activity polylines that are checked on the page
 let polylineMap = new Map();
@@ -37,7 +38,21 @@ function getFilteredActivities(sportType, callback=null) {
     }
 
     request.onsuccess = (event) => {
-        callback(request.result);
+        let activityList = [];
+        const searchTerm = searchInput.value?.toLowerCase();
+        
+        // filter to match search term if present
+        if(searchTerm.trim() !== "") {
+            request.result.forEach(element => {
+                if(element.name.toLowerCase().includes(searchTerm)) {
+                    activityList.push(element);
+                }
+            });
+
+            callback(activityList);
+        }
+        else
+            callback(request.result);
     }
 }
 
