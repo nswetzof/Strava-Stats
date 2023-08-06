@@ -1,5 +1,4 @@
-import * as DBase from "./DBase.js";
-import {client_id} from "./Globals.js";
+// import * as DBase from "./DBase.js";
 
 class Strava {
     /* API Calls */
@@ -67,6 +66,17 @@ class Strava {
     
         return result;
     }
+
+    static async getRoute(access_token, id) {
+        const url = `https://www.strava.com/api/v3/routes/${id}`;
+        console.log(id);
+
+        const result = await Strava.readData(access_token, url).then(data => {
+            console.log(data);
+        }).catch(error => {
+            console.error(`Error: ${error}`);
+        });
+    }
     
     /*
     Uses fetch to obtain data in JSON format from the strava API
@@ -87,7 +97,7 @@ class Strava {
     
         return response.json();
         }).catch(error => {
-        console.error(`Error accessing data: ${error}`);
+            console.error(`Error accessing data: ${error}`);
         });
     
         return result;

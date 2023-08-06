@@ -7,13 +7,13 @@
 // });
 
 // require("swagger");
-import * as DBase from "./Modules/DBase.js";
-import {Strava} from "./Modules/StravaCalls.js";
-import {Auth} from "./Modules/Authenticate.js";
+// import * as DBase from "./Modules/DBase.js";
+// import {Strava} from "./modules/StravaCalls.js";
+// import {Auth} from "./Modules/Authenticate.js";
 
 
-const client_id = '53575'
-const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
+// const client_id = '53575'
+// const client_secret = '0f3f0cb4cfe3232afdc5e5e5aba3d081c4beceb0';
 
 let access_token = null;
 let refresh_token = null;
@@ -27,6 +27,7 @@ const activityBtn = document.querySelector(".activities");
 activityBtn.addEventListener("click", e => {
   e.preventDefault();
   Strava.getActivities((Date.now()/1000).toFixed(0), (Date.now()/1000).toFixed(0) - 100000);
+  DBase.checkStoredCredentials(15332212, "read", Strava.getRoute, 9066724191);
 });
 
 const searchTerm = document.querySelector(".search");
